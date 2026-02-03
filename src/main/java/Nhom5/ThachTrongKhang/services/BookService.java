@@ -1,42 +1,52 @@
 package Nhom5.ThachTrongKhang.services;
 
-import Nhom5.ThachTrongKhang.Models.Book;
+import Nhom5.ThachTrongKhang.entities.Book;
+import Nhom5.ThachTrongKhang.repositories.IBookRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(isolation = Isolation.SERIALIZABLE, rollbackFor = { Exception.class, Throwable.class })
 public class BookService {
-    private final List<Book> books;
+    private final IBookRepository bookRepository;
 
-    public List<Book> getAllBooks() {
-        return books;
+    public Page<Book> getAllBooks(Integer pageNo, Integer pageSize, String sortBy) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(sortBy));
+        return bookRepository.findAll(pageable);
     }
 
     public Optional<Book> getBookById(Long id) {
-        return books.stream()
-                .filter(book -> book.getId().equals(id))
-                .findFirst();
+        return bookRepository.findById(id);
     }
 
     public void addBook(Book book) {
-        books.add(book);
+        bookRepository.save(book);
     }
 
-    public void updateBook(Book book) {
-        var bookOptional = getBookById(book.getId());
-        if (bookOptional.isPresent()) {
-            Book bookUpdate = bookOptional.get();
-            bookUpdate.setTitle(book.getTitle());
-            bookUpdate.setAuthor(book.getAuthor());
-            bookUpdate.setPrice(book.getPrice());
-            bookUpdate.setCategory(book.getCategory());
-        }
+    public void updateBook(@NotNull Book book) {
+        Book existingBook = bookRepository.findById(book.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + book.getId()));
+        existingBook.setTitle(book.getTitle());
+        existingBook.setAuthor(book.getAuthor());
+        existingBook.setPrice(book.getPrice());
+        existingBook.setCategory(book.getCategory());
+        bookRepository.save(existingBook);
     }
 
     public void deleteBookById(Long id) {
-        getBookById(id).ifPresent(books::remove);
+        bookRepository.deleteById(id);
     }
 }

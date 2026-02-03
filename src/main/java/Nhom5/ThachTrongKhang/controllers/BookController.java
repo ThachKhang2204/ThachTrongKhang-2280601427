@@ -1,61 +1,36 @@
 package Nhom5.ThachTrongKhang.controllers;
 
-import Nhom5.ThachTrongKhang.Models.Book;
+import Nhom5.ThachTrongKhang.entities.Book; // Sửa: dùng entities thay vì Models
 import Nhom5.ThachTrongKhang.services.BookService;
+import Nhom5.ThachTrongKhang.services.CategoryService;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-
-import org.antlr.v4.runtime.misc.NotNull;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/books")
 @RequiredArgsConstructor
 public class BookController {
     private final BookService bookService;
+    private final CategoryService categoryService;
 
     @GetMapping
-    public String showAllBooks(@NotNull Model model) {
-        model.addAttribute("books", bookService.getAllBooks());
-        return "book/list"; // Trả về tên của view (list.html)
-    }
-
-    @GetMapping("/add")
-    public String addBookForm(@NotNull Model model) {
-        model.addAttribute("book", new Book());
-        return "book/add";
-    }
-
-    @PostMapping("/add")
-    public String addBook(@ModelAttribute("book") Book book) {
-        if (bookService.getBookById(book.getId()).isEmpty())
-            bookService.addBook(book);
-        return "redirect:/books";
-    }
-
-    @GetMapping("/edit/{id}")
-    public String editBookForm(@NotNull Model model, @PathVariable long id) {
-        var book = bookService.getBookById(id).orElse(null);
-        model.addAttribute("book", book != null ? book : new Book());
-        return "book/edit";
-    }
-
-    @PostMapping("/edit")
-    public String editBook(@ModelAttribute("book") Book book) {
-        bookService.updateBook(book);
-        return "redirect:/books";
-    }
-
-    @GetMapping("/delete/{id}")
-    public String deleteBook(@PathVariable long id) {
-        if (bookService.getBookById(id).isPresent())
-            bookService.deleteBookById(id);
-        return "redirect:/books";
+    public String showAllBooks(
+            @NotNull Model model,
+            @RequestParam(defaultValue = "0") Integer pageNo,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(defaultValue = "id") String sortBy) {
+        
+        Page<Book> bookPage = bookService.getAllBooks(pageNo, pageSize, sortBy);
+        
+        model.addAttribute("books", bookPage.getContent());
+        model.addAttribute("currentPage", pageNo);
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("totalPages", bookPage.getTotalPages());
+        
+        return "book/list";
     }
 }
