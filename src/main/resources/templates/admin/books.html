@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Quản lý sách - BookHaven</title>
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::admin-css}"></th:block>
+</head>
+<body class="d-flex flex-column h-100">
+    <th:block th:replace="~{layout::header}"></th:block>
+    
+    <main class="admin-page flex-shrink-0">
+        <div class="container mt-4 mb-5">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2>
+                <i class="bi bi-book-fill"></i> Quản Lý Sách
+            </h2>
+            <p class="mb-0">Import/Export danh sách sách qua file Excel</p>
+        </div>
+
+        <!-- Excel Actions Section -->
+        <div class="excel-section">
+            <div class="row">
+                <!-- Export Card -->
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <div class="action-icon export-icon">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <h5>Export Dữ Liệu</h5>
+                        <p>Tải xuống toàn bộ danh sách sách dưới dạng file Excel (.xlsx)</p>
+                        <a href="/admin/books/export" class="btn btn-excel btn-export text-decoration-none">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Export Excel
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Import Card -->
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <div class="action-icon import-icon">
+                            <i class="bi bi-upload"></i>
+                        </div>
+                        <h5>Import Dữ Liệu</h5>
+                        <p>Tải lên file Excel để thêm hoặc cập nhật sách trong hệ thống</p>
+                        
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">
+                                <i class="bi bi-cloud-upload"></i>
+                            </div>
+                            <h6 style="color: #2d3748; font-weight: 600;">Nhấp hoặc kéo file vào đây</h6>
+                            <small style="color: #718096;">Hỗ trợ định dạng: .xlsx, .xls</small>
+                        </div>
+                        
+                        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+                        
+                        <div id="fileInfo" class="file-info" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-earmark-excel text-success" style="font-size: 1.5rem;"></i>
+                                    <strong class="ms-2" id="fileName"></strong>
+                                </div>
+                                <button class="btn btn-excel btn-import" onclick="uploadFile()">
+                                    <i class="bi bi-upload"></i> Tải lên
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Books Table -->
+        <div class="books-table-card">
+            <div class="table-header">
+                <h5>
+                    <i class="bi bi-list-ul"></i> Danh Sách Sách
+                </h5>
+                <span class="count-badge" th:text="${#lists.size(books)} + ' sách'">0 sách</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ảnh</th>
+                            <th>Tiêu Đề</th>
+                            <th>Tác Giả</th>
+                            <th>Giá</th>
+                            <th>Danh Mục</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="book : ${books}">
+                            <td>
+                                <strong th:text="${book.id}">1</strong>
+                            </td>
+                            <td>
+                                <img th:if="${book.imageUrl != null && !book.imageUrl.isEmpty()}" 
+                                     th:src="${book.imageUrl}" 
+                                     class="book-image" 
+                                     th:alt="${book.title}">
+                                <div th:if="${book.imageUrl == null || book.imageUrl.isEmpty()}" 
+                                     class="book-image-placeholder">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="book-title" th:text="${book.title}">Book Title</div>
+                            </td>
+                            <td>
+                                <span class="book-author" th:text="${book.author}">Author</span>
+                            </td>
+                            <td>
+                                <span class="price-tag">
+                                    <span th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')}">100,000</span>đ
+                                </span>
+                            </td>
+                            <td>
+                                <span class="category-badge" th:text="${book.category.name}">Category</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center">
+            <div class="loading-spinner"></div>
+            <p class="text-white mt-3">Đang xử lý...</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Handle drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    selectedFile = file;
+                    showFileInfo(file.name);
+                } else {
+                    showNotification('error', 'Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+                }
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                showFileInfo(file.name);
+            }
+        }
+
+        function showFileInfo(fileName) {
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('fileInfo').style.display = 'block';
+        }
+
+        function uploadFile() {
+            if (!selectedFile) {
+                showNotification('error', 'Vui lòng chọn file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            // Show loading
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+
+            fetch('/admin/books/import', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.style.display = 'none';
+                if (data.success) {
+                    showNotification('success', data.message);
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showNotification('error', 'Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                loadingOverlay.style.display = 'none';
+                showNotification('error', 'Lỗi: ' + error.message);
+            });
+        }
+        
+        function showNotification(type, message) {
+            const bgColor = type === 'success' ? 
+                'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                font-weight: 600;
+            `;
+            notification.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'x-circle'}-fill me-2"></i>${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3500);
+        }
+    </script>
+    </main>
+    
+    <th:block th:replace="~{layout::footer}"></th:block>
+    <th:block th:replace="~{layout::scripts}"></th:block>
+</body>
+</html>
+

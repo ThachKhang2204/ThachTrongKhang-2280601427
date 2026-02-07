@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: dynamic(~{::main})}">
+<head>
+    <title>Quản lý sách - BookHaven</title>
+</head>
+<body>
+<main>
+    <style>
+        main {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+        
+        .page-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .excel-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .action-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        
+        .action-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .export-icon {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .import-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .action-card h5 {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .action-card p {
+            color: #718096;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-excel {
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.95rem;
+        }
+        
+        .btn-export {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-import {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-excel:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        .upload-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            margin-top: 1rem;
+        }
+        
+        .upload-zone:hover {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+        
+        .upload-zone.dragover {
+            background: linear-gradient(135deg, #e6f2ff 0%, #f0f7ff 100%);
+            border-color: #38ef7d;
+            border-style: solid;
+        }
+        
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .file-info {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .file-info strong {
+            color: #2d3748;
+        }
+        
+        .books-table-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .table-header h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .count-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody td {
+            padding: 1.2rem 1.5rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            transform: scale(1.005);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .book-image {
+            width: 60px;
+            height: 85px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .book-image-placeholder {
+            width: 60px;
+            height: 85px;
+            background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .book-title {
+            font-weight: 600;
+            color: #2d3748;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .book-author {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .price-tag {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .category-badge {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <div class="container mt-4 mb-5">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2>
+                <i class="bi bi-book-fill"></i> Quản Lý Sách
+            </h2>
+            <p class="mb-0">Import/Export danh sách sách qua file Excel</p>
+        </div>
+
+        <!-- Excel Actions Section -->
+        <div class="excel-section">
+            <div class="row">
+                <!-- Export Card -->
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <div class="action-icon export-icon">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <h5>Export Dữ Liệu</h5>
+                        <p>Tải xuống toàn bộ danh sách sách dưới dạng file Excel (.xlsx)</p>
+                        <a href="/admin/books/export" class="btn btn-excel btn-export text-decoration-none">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Export Excel
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Import Card -->
+                <div class="col-md-6">
+                    <div class="action-card">
+                        <div class="action-icon import-icon">
+                            <i class="bi bi-upload"></i>
+                        </div>
+                        <h5>Import Dữ Liệu</h5>
+                        <p>Tải lên file Excel để thêm hoặc cập nhật sách trong hệ thống</p>
+                        
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <div class="upload-icon">
+                                <i class="bi bi-cloud-upload"></i>
+                            </div>
+                            <h6 style="color: #2d3748; font-weight: 600;">Nhấp hoặc kéo file vào đây</h6>
+                            <small style="color: #718096;">Hỗ trợ định dạng: .xlsx, .xls</small>
+                        </div>
+                        
+                        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+                        
+                        <div id="fileInfo" class="file-info" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-earmark-excel text-success" style="font-size: 1.5rem;"></i>
+                                    <strong class="ms-2" id="fileName"></strong>
+                                </div>
+                                <button class="btn btn-excel btn-import" onclick="uploadFile()">
+                                    <i class="bi bi-upload"></i> Tải lên
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Books Table -->
+        <div class="books-table-card">
+            <div class="table-header">
+                <h5>
+                    <i class="bi bi-list-ul"></i> Danh Sách Sách
+                </h5>
+                <span class="count-badge" th:text="${#lists.size(books)} + ' sách'">0 sách</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Ảnh</th>
+                            <th>Tiêu Đề</th>
+                            <th>Tác Giả</th>
+                            <th>Giá</th>
+                            <th>Danh Mục</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="book : ${books}">
+                            <td>
+                                <strong th:text="${book.id}">1</strong>
+                            </td>
+                            <td>
+                                <img th:if="${book.imageUrl != null && !book.imageUrl.isEmpty()}" 
+                                     th:src="${book.imageUrl}" 
+                                     class="book-image" 
+                                     th:alt="${book.title}">
+                                <div th:if="${book.imageUrl == null || book.imageUrl.isEmpty()}" 
+                                     class="book-image-placeholder">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="book-title" th:text="${book.title}">Book Title</div>
+                            </td>
+                            <td>
+                                <span class="book-author" th:text="${book.author}">Author</span>
+                            </td>
+                            <td>
+                                <span class="price-tag">
+                                    <span th:text="${#numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT')}">100,000</span>đ
+                                </span>
+                            </td>
+                            <td>
+                                <span class="category-badge" th:text="${book.category.name}">Category</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center">
+            <div class="loading-spinner"></div>
+            <p class="text-white mt-3">Đang xử lý...</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        // Handle drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    selectedFile = file;
+                    showFileInfo(file.name);
+                } else {
+                    showNotification('error', 'Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+                }
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                showFileInfo(file.name);
+            }
+        }
+
+        function showFileInfo(fileName) {
+            document.getElementById('fileName').textContent = fileName;
+            document.getElementById('fileInfo').style.display = 'block';
+        }
+
+        function uploadFile() {
+            if (!selectedFile) {
+                showNotification('error', 'Vui lòng chọn file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            // Show loading
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+
+            fetch('/admin/books/import', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.style.display = 'none';
+                if (data.success) {
+                    showNotification('success', data.message);
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showNotification('error', 'Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                loadingOverlay.style.display = 'none';
+                showNotification('error', 'Lỗi: ' + error.message);
+            });
+        }
+        
+        function showNotification(type, message) {
+            const bgColor = type === 'success' ? 
+                'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 
+                'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                font-weight: 600;
+            `;
+            notification.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'x-circle'}-fill me-2"></i>${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</main>
+</body>
+</html>

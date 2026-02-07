@@ -28,6 +28,10 @@ public class BookService {
         return bookRepository.findAll(pageable);
     }
 
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
+    }
+
     public Optional<Book> getBookById(Long id) {
         return bookRepository.findById(id);
     }
@@ -38,8 +42,8 @@ public class BookService {
 
     public void updateBook(@NotNull Book book) {
         Book existingBook = bookRepository.findById(book.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Book not found with id: " + book.getId()));
-        existingBook.setTitle(book.getTitle());
+                .orElse(null);
+        Objects.requireNonNull(existingBook).setTitle(book.getTitle());
         existingBook.setAuthor(book.getAuthor());
         existingBook.setPrice(book.getPrice());
         existingBook.setCategory(book.getCategory());
@@ -47,6 +51,17 @@ public class BookService {
     }
 
     public void deleteBookById(Long id) {
-        bookRepository.deleteById(id);
+        Book book = bookRepository.findById(id).orElse(null);
+        if (book != null) {
+            // Check if book has invoices
+            if (book.getItemInvoices() != null && !book.getItemInvoices().isEmpty()) {
+                throw new IllegalStateException("Cannot delete book that has been ordered. Book ID: " + id);
+            }
+            bookRepository.deleteById(id);
+        }
+    }
+
+    public List<Book> searchBook(String keyword) {
+        return bookRepository.searchBook(keyword);
     }
 }

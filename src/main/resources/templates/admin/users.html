@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Quản lý người dùng - BookHaven</title>
+    <th:block th:replace="~{layout::link-css}"></th:block>
+    <th:block th:replace="~{layout::admin-css}"></th:block>
+</head>
+<body class="d-flex flex-column h-100">
+    <th:block th:replace="~{layout::header}"></th:block>
+    
+    <main class="admin-page flex-shrink-0">
+        <div class="container mt-4 mb-5">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2>
+                <i class="bi bi-people-fill"></i> Quản Lý Người Dùng
+            </h2>
+            <p class="mb-0">Xem và quản lý tài khoản người dùng trong hệ thống BookHaven</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row stats-row">
+            <div class="col-md-4">
+                <div class="stat-card total">
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-number" th:text="${#lists.size(users)}">0</div>
+                    <div class="stat-label">Tổng Người Dùng</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card active">
+                    <div class="stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-number" th:text="${#lists.size(users.?[!locked])}">0</div>
+                    <div class="stat-label">Đang Hoạt Động</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card locked">
+                    <div class="stat-icon">
+                        <i class="bi bi-lock-fill"></i>
+                    </div>
+                    <div class="stat-number" th:text="${#lists.size(users.?[locked])}">0</div>
+                    <div class="stat-label">Đã Khóa</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="users-table-card">
+            <div class="table-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5>
+                            <i class="bi bi-list-ul"></i> Danh Sách Người Dùng
+                        </h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="search-box ms-auto">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control" id="searchInput" 
+                                   placeholder="Tìm kiếm người dùng..." 
+                                   onkeyup="searchUsers()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Người Dùng</th>
+                            <th>Số Điện Thoại</th>
+                            <th>Vai Trò</th>
+                            <th>Trạng Thái</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td>
+                                <strong th:text="${user.id}">1</strong>
+                            </td>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-avatar" th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">A</div>
+                                    <div>
+                                        <div class="user-name" th:text="${user.username}">username</div>
+                                        <div class="user-email" th:text="${user.email}">email@example.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td th:text="${user.phone}">0123456789</td>
+                            <td>
+                                <span th:each="role : ${user.roles}">
+                                    <span th:if="${role.name == 'ADMIN'}" class="role-badge role-admin">
+                                        <i class="bi bi-shield-fill-check"></i> Admin
+                                    </span>
+                                    <span th:if="${role.name != 'ADMIN'}" class="role-badge role-user" th:text="${role.name}">User</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${!user.locked}" class="status-badge status-active">
+                                    <i class="bi bi-check-circle-fill"></i> Hoạt động
+                                </span>
+                                <span th:if="${user.locked}" class="status-badge status-locked">
+                                    <i class="bi bi-lock-fill"></i> Đã khóa
+                                </span>
+                            </td>
+                            <td>
+                                <button th:if="${!user.locked}" 
+                                        class="action-btn btn-lock"
+                                        th:onclick="'lockUser(' + ${user.id} + ')'">
+                                    <i class="bi bi-lock"></i> Khóa
+                                </button>
+                                <button th:if="${user.locked}" 
+                                        class="action-btn btn-unlock"
+                                        th:onclick="'unlockUser(' + ${user.id} + ')'">
+                                    <i class="bi bi-unlock"></i> Mở khóa
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function searchUsers() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            }
+        }
+
+        function lockUser(userId) {
+            if (!confirm('Bạn có chắc muốn khóa tài khoản này?')) {
+                return;
+            }
+
+            fetch('/admin/users/' + userId + '/lock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showNotification('error', data.message);
+                }
+            })
+            .catch(error => {
+                showNotification('error', 'Lỗi: ' + error.message);
+            });
+        }
+
+        function unlockUser(userId) {
+            if (!confirm('Bạn có chắc muốn mở khóa tài khoản này?')) {
+                return;
+            }
+
+            fetch('/admin/users/' + userId + '/unlock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showNotification('error', data.message);
+                }
+            })
+            .catch(error => {
+                showNotification('error', 'Lỗi: ' + error.message);
+            });
+        }
+        
+        function showNotification(type, message) {
+            const bgColor = type === 'success' ? '#38ef7d' : '#f5576c';
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+    </main>
+    
+    <th:block th:replace="~{layout::footer}"></th:block>
+    <th:block th:replace="~{layout::scripts}"></th:block>
+</body>
+</html>

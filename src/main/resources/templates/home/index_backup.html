@@ -40,17 +40,8 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
         .feature-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            color: white;
-            font-weight: 700;
-            font-size: 2.5rem;
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
         .feature-title {
             font-size: 1.25rem;
@@ -60,6 +51,32 @@
         }
         .feature-desc {
             color: #718096;
+        }
+        .icon-book::before {
+            content: "📖";
+            font-size: 3rem;
+        }
+        .icon-gift::before {
+            content: "🎁";
+            font-size: 3rem;
+        }
+        .icon-rocket::before {
+            content: "🚀";
+            font-size: 3rem;
+        }
+        /* Fallback for browsers that don't support emoji */
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+            font-size: 2rem;
         }
     </style>
 </head> 
@@ -79,29 +96,28 @@
     <div class="row mt-5 g-4">
         <div class="col-md-4">
             <div class="feature-card">
-                <div class="feature-icon">S</div>
-                <h3 class="feature-title">Kho Sách Khổng Lồ</h3>
-                <p class="feature-desc">Khám phá hàng nghìn đầu sách thuộc mọi thể loại - Văn học, Khoa học, Giáo dục & Nhiều hơn nữa!</p>
+                <div class="feature-icon">�</div>
+                <h3 class="feature-title">Huge Collection</h3>
+                <p class="feature-desc">Discover thousands of books across all genres - Fiction, Non-fiction, Academic & More!</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="feature-card">
-                <div class="feature-icon">%</div>
-                <h3 class="feature-title">Ưu Đãi Đặc Biệt</h3>
-                <p class="feature-desc">Tận hưởng giảm giá độc quyền, combo ưu đãi và chương trình khuyến mãi quanh năm</p>
+                <div class="feature-icon">🎁</div>
+                <h3 class="feature-title">Special Offers</h3>
+                <p class="feature-desc">Enjoy exclusive discounts, bundle deals and seasonal promotions all year round</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3 class="feature-title">Giao Hàng Nhanh</h3>
-                <p class="feature-desc">Vận chuyển nhanh chóng và đáng tin cậy tận nơi với theo dõi đơn hàng</p>
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">Quick Delivery</h3>
+                <p class="feature-desc">Fast and reliable shipping to your doorstep with order tracking</p>
             </div>
         </div>
     </div>
 </div> 
 
-<th:block th:replace="~{layout::footer}"></th:block>
-<th:block th:replace="~{layout::scripts}"></th:block>
+<th:block th:replace="~{layout::footer}"></th:block> 
 </body> 
-</html>
+</html> 
